@@ -1,0 +1,47 @@
+name: Build Debug APK
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: কোড চেকআউট করা হচ্ছে
+        uses: actions/checkout@v4
+
+      - name: JDK 17 সেটআপ করা হচ্ছে
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Gradle সেটআপ করা হচ্ছে
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.1.1'
+
+      - name: Debug keystore জেনারেট করা হচ্ছে
+        run: |
+          keytool -genkeypair -v \
+            -keystore debug.keystore \
+            -storepass android \
+            -alias androiddebugkey \
+            -keypass android \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+
+      - name: Debug APK বিল্ড করা হচ্ছে
+        run: gradle assembleDebug --stacktrace
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+      - name: APK আপলোড করা হচ্ছে (Artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: voice-generator-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
