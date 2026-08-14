@@ -46,10 +46,12 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      # AGP 9.1.1 এর জন্য ন্যূনতম Gradle 9.3.1 লাগে, তাই ভার্সন হার্ডকোড না করে
+      # সবসময় সর্বশেষ স্থিতিশীল Gradle ব্যবহার করা হচ্ছে
       - name: Gradle সেটআপ করা হচ্ছে
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '9.1.0'
+          gradle-version: 'current'
 
       - name: Debug keystore জেনারেট করা হচ্ছে
         working-directory: ${{ steps.findproj.outputs.projdir }}
