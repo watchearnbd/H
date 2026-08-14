@@ -13,6 +13,14 @@ jobs:
       - name: কোড চেকআউট করা হচ্ছে
         uses: actions/checkout@v4
 
+      # রিপোতে zip ফাইলটাই সরাসরি আপলোড করা আছে, তাই এখানে সেটা আনজিপ করে
+      # প্রজেক্ট ফোল্ডার বের করে আনা হচ্ছে
+      - name: Zip আনজিপ করা হচ্ছে
+        run: |
+          unzip -o "voice-generator-github-ready.zip" -d extracted
+          echo "----- এক্সট্র্যাক্ট হওয়া কনটেন্ট -----"
+          find extracted -maxdepth 3
+
       - name: JDK 17 সেটআপ করা হচ্ছে
         uses: actions/setup-java@v4
         with:
@@ -25,6 +33,7 @@ jobs:
           gradle-version: '9.1.0'
 
       - name: Debug keystore জেনারেট করা হচ্ছে
+        working-directory: extracted/kantho_project
         run: |
           keytool -genkeypair -v \
             -keystore debug.keystore \
@@ -35,6 +44,7 @@ jobs:
             -dname "CN=Android Debug,O=Android,C=US"
 
       - name: Debug APK বিল্ড করা হচ্ছে
+        working-directory: extracted/kantho_project
         run: gradle assembleDebug --stacktrace
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -43,5 +53,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: voice-generator-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          path: extracted/kantho_project/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
