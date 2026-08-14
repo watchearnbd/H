@@ -46,12 +46,13 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      # AGP 9.1.1 এর জন্য ন্যূনতম Gradle 9.3.1 লাগে, তাই ভার্সন হার্ডকোড না করে
-      # সবসময় সর্বশেষ স্থিতিশীল Gradle ব্যবহার করা হচ্ছে
+      # এই প্রজেক্টের Compose কম্পাইলার প্লাগইনের সাথে ঠিক Gradle 9.3.1 ভার্সনই
+      # কম্প্যাটিবল — এর চেয়ে পুরনো (মিনিমাম রিকোয়ারমেন্ট মিসম্যাচ) বা নতুন
+      # (কম্পাইলার প্লাগইন মিসম্যাচ) ভার্সনে এরর হয়
       - name: Gradle সেটআপ করা হচ্ছে
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: 'current'
+          gradle-version: '9.3.1'
 
       - name: Debug keystore জেনারেট করা হচ্ছে
         working-directory: ${{ steps.findproj.outputs.projdir }}
