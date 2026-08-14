@@ -13,13 +13,32 @@ jobs:
       - name: কোড চেকআউট করা হচ্ছে
         uses: actions/checkout@v4
 
-      # রিপোতে zip ফাইলটাই সরাসরি আপলোড করা আছে, তাই এখানে সেটা আনজিপ করে
-      # প্রজেক্ট ফোল্ডার বের করে আনা হচ্ছে
+      - name: রিপোর ফাইল লিস্ট দেখা হচ্ছে (ডিবাগের জন্য)
+        run: ls -la
+
+      # রিপোতে যেই নামেই zip ফাইল থাকুক না কেন, সেটা নিজে খুঁজে বের করে আনজিপ করা হচ্ছে
       - name: Zip আনজিপ করা হচ্ছে
         run: |
-          unzip -o "voice-generator-github-ready.zip" -d extracted
+          ZIPFILE=$(find . -maxdepth 1 -iname "*.zip" | head -n 1)
+          if [ -z "$ZIPFILE" ]; then
+            echo "কোনো .zip ফাইল রিপোর রুটে পাওয়া যায়নি!"
+            exit 1
+          fi
+          echo "পাওয়া গেছে: $ZIPFILE"
+          unzip -o "$ZIPFILE" -d extracted
           echo "----- এক্সট্র্যাক্ট হওয়া কনটেন্ট -----"
           find extracted -maxdepth 3
+
+      - name: প্রজেক্ট ফোল্ডার খুঁজে বের করা হচ্ছে
+        id: findproj
+        run: |
+          PROJDIR=$(find extracted -maxdepth 3 -name "settings.gradle.kts" -exec dirname {} \; | head -n 1)
+          if [ -z "$PROJDIR" ]; then
+            echo "settings.gradle.kts খুঁজে পাওয়া যায়নি!"
+            exit 1
+          fi
+          echo "প্রজেক্ট ফোল্ডার: $PROJDIR"
+          echo "projdir=$PROJDIR" >> "$GITHUB_OUTPUT"
 
       - name: JDK 17 সেটআপ করা হচ্ছে
         uses: actions/setup-java@v4
@@ -33,7 +52,7 @@ jobs:
           gradle-version: '9.1.0'
 
       - name: Debug keystore জেনারেট করা হচ্ছে
-        working-directory: extracted/kantho_project
+        working-directory: ${{ steps.findproj.outputs.projdir }}
         run: |
           keytool -genkeypair -v \
             -keystore debug.keystore \
@@ -44,7 +63,7 @@ jobs:
             -dname "CN=Android Debug,O=Android,C=US"
 
       - name: Debug APK বিল্ড করা হচ্ছে
-        working-directory: extracted/kantho_project
+        working-directory: ${{ steps.findproj.outputs.projdir }}
         run: gradle assembleDebug --stacktrace
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -53,5 +72,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: voice-generator-debug-apk
-          path: extracted/kantho_project/app/build/outputs/apk/debug/*.apk
+          path: ${{ steps.findproj.outputs.projdir }}/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
